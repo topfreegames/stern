@@ -15,6 +15,7 @@
 package stern
 
 import (
+	"io"
 	"regexp"
 	"time"
 
@@ -34,4 +35,5 @@ type Config struct {
 	AllNamespaces  bool
 	LabelSelector  labels.Selector
 	TailLines      *int64
+	Writer         io.Writer
 }

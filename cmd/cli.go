@@ -199,6 +199,7 @@ func parseConfig(args []string) (*stern.Config, error) {
 		AllNamespaces:  opts.allNamespaces,
 		LabelSelector:  labelSelector,
 		TailLines:      tailLines,
+		Writer:         os.Stdout,
 	}, nil
 }
 

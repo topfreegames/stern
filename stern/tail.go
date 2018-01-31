@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"regexp"
 
 	"github.com/fatih/color"
@@ -45,6 +46,7 @@ type TailOptions struct {
 	Exclude      []*regexp.Regexp
 	Namespace    bool
 	TailLines    *int64
+	Writer       io.Writer
 }
 
 // NewTail returns a new tail for a Kubernetes container inside a pod
@@ -86,11 +88,16 @@ func (t *Tail) Start(ctx context.Context, i v1.PodInterface) {
 		g := color.New(color.FgHiGreen, color.Bold).SprintFunc()
 		p := t.podColor.SprintFunc()
 		c := t.containerColor.SprintFunc()
+		var str string
 		if t.Options.Namespace {
-			fmt.Printf("%s %s %s › %s\n", g("+"), p(t.Namespace), p(t.PodName), c(t.ContainerName))
+			str = fmt.Sprintf(
+				"%s %s %s › %s\n",
+				g("+"), p(t.Namespace), p(t.PodName), c(t.ContainerName),
+			)
 		} else {
-			fmt.Printf("%s %s › %s\n", g("+"), p(t.PodName), c(t.ContainerName))
+			str = fmt.Sprintf("%s %s › %s\n", g("+"), p(t.PodName), c(t.ContainerName))
 		}
+		fmt.Fprintf(t.Options.Writer, str)
 
 		req := i.GetLogs(t.PodName, &corev1.PodLogOptions{
 			Follow:       true,
@@ -143,11 +150,13 @@ func (t *Tail) Start(ctx context.Context, i v1.PodInterface) {
 func (t *Tail) Close() {
 	r := color.New(color.FgHiRed, color.Bold).SprintFunc()
 	p := t.podColor.SprintFunc()
+	var str string
 	if t.Options.Namespace {
-		fmt.Printf("%s %s %s\n", r("-"), p(t.Namespace), p(t.PodName))
+		str = fmt.Sprintf("%s %s %s\n", r("-"), p(t.Namespace), p(t.PodName))
 	} else {
-		fmt.Printf("%s %s\n", r("-"), p(t.PodName))
+		str = fmt.Sprintf("%s %s\n", r("-"), p(t.PodName))
 	}
+	fmt.Fprintf(t.Options.Writer, str)
 	close(t.closed)
 }
 
@@ -155,9 +164,9 @@ func (t *Tail) Close() {
 func (t *Tail) Print(msg string) {
 	p := t.podColor.SprintFunc()
 	c := t.containerColor.SprintFunc()
+	str := fmt.Sprintf("%s %s %s", p(t.PodName), c(t.ContainerName), msg)
 	if t.Options.Namespace {
-		fmt.Printf("%s %s %s %s", p(t.Namespace), p(t.PodName), c(t.ContainerName), msg)
-	} else {
-		fmt.Printf("%s %s %s", p(t.PodName), c(t.ContainerName), msg)
+		str = fmt.Sprintf("%s %s", p(t.Namespace), str)
 	}
+	fmt.Fprintf(t.Options.Writer, str)
 }
