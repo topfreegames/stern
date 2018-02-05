@@ -64,6 +64,7 @@ func Run(ctx context.Context, config *Config) error {
 				Namespace:    config.AllNamespaces,
 				TailLines:    config.TailLines,
 				Writer:       config.Writer,
+				WriterMutex:  config.WriterMutex,
 			})
 			tails[id] = tail
 

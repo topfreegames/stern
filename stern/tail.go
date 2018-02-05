@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"sync"
 
 	"github.com/fatih/color"
 	"github.com/pkg/errors"
@@ -47,6 +48,7 @@ type TailOptions struct {
 	Namespace    bool
 	TailLines    *int64
 	Writer       io.Writer
+	WriterMutex  *sync.Mutex
 }
 
 // NewTail returns a new tail for a Kubernetes container inside a pod
@@ -97,7 +99,7 @@ func (t *Tail) Start(ctx context.Context, i v1.PodInterface) {
 		} else {
 			str = fmt.Sprintf("%s %s › %s\n", g("+"), p(t.PodName), c(t.ContainerName))
 		}
-		fmt.Fprintf(t.Options.Writer, str)
+		t.PrintSafe(str)
 
 		req := i.GetLogs(t.PodName, &corev1.PodLogOptions{
 			Follow:       true,
@@ -156,7 +158,7 @@ func (t *Tail) Close() {
 	} else {
 		str = fmt.Sprintf("%s %s\n", r("-"), p(t.PodName))
 	}
-	fmt.Fprintf(t.Options.Writer, str)
+	t.PrintSafe(str)
 	close(t.closed)
 }
 
@@ -168,5 +170,12 @@ func (t *Tail) Print(msg string) {
 	if t.Options.Namespace {
 		str = fmt.Sprintf("%s %s", p(t.Namespace), str)
 	}
+	t.PrintSafe(str)
+}
+
+func (t *Tail) PrintSafe(str string) {
+	t.Options.WriterMutex.Lock()
+	defer t.Options.WriterMutex.Unlock()
+
 	fmt.Fprintf(t.Options.Writer, str)
 }

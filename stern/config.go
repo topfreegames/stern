@@ -17,6 +17,7 @@ package stern
 import (
 	"io"
 	"regexp"
+	"sync"
 	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -36,4 +37,5 @@ type Config struct {
 	LabelSelector  labels.Selector
 	TailLines      *int64
 	Writer         io.Writer
+	WriterMutex    *sync.Mutex
 }
