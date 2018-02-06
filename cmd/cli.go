@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sync"
 	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -200,6 +201,7 @@ func parseConfig(args []string) (*stern.Config, error) {
 		LabelSelector:  labelSelector,
 		TailLines:      tailLines,
 		Writer:         os.Stdout,
+		WriterMutex:    &sync.Mutex{},
 	}, nil
 }
 
