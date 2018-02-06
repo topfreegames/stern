@@ -144,7 +144,6 @@ func (t *Tail) Start(ctx context.Context, i v1.PodInterface) {
 
 	go func() {
 		<-ctx.Done()
-		close(t.closed)
 	}()
 }
 
